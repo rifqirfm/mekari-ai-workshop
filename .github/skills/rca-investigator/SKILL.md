@@ -1,12 +1,12 @@
 ---
 name: rca-investigator
-description: "Investigate production issues by querying Grafana Loki logs, tracing errors to source code, and producing Root Cause Analysis (RCA). Publishes the RCA to Confluence. Use when: user provides a trace ID, error message, or asks to investigate a production incident, debug logs, create RCA, root cause analysis, post-mortem."
+description: "Investigate production issues by querying Grafana Loki logs, tracing errors to source code, and producing Root Cause Analysis (RCA). Saves the RCA as a local markdown file. Use when: user provides a trace ID, error message, or asks to investigate a production incident, debug logs, create RCA, root cause analysis, post-mortem."
 argument-hint: "Provide a trace ID, error message, or describe the incident to investigate"
 ---
 
 # RCA Investigator
 
-Investigate production issues end-to-end: query Grafana Loki logs, trace errors to source code, produce a structured RCA document, and publish it to Confluence.
+Investigate production issues end-to-end: query Grafana Loki logs, trace errors to source code, and produce a structured RCA document saved as a local markdown file.
 
 ## When to Use
 
@@ -19,7 +19,6 @@ Investigate production issues end-to-end: query Grafana Loki logs, trace errors 
 ## Required MCP Servers
 
 - **grafana-loki**: For querying log data (tool: `query_logs`)
-- **com.atlassian**: For publishing RCA to Confluence
 
 ## Procedure
 
@@ -101,33 +100,24 @@ Fill in the RCA template from [rca-template.md](./references/rca-template.md) wi
 
 Present the completed RCA to the user for review before publishing.
 
-### Step 5 — Publish RCA to Confluence
+### Step 5 — Save RCA as Markdown File
 
-After user approval, publish the RCA to Confluence using the Atlassian MCP tools.
+Save the completed RCA document as a local markdown file in the workspace:
 
-**Target location:**
-- Cloud ID: `a3bbc8c1-dff1-447e-8d87-2faba3380518`
-- Space: `Officeless`
-- Parent Page ID: `50773754002`
-
-**Publishing steps:**
-1. Use `mcp_com_atlassian_createConfluencePage` with:
-   - `cloudId`: `a3bbc8c1-dff1-447e-8d87-2faba3380518`
-   - `spaceId`: `Officeless`
-   - `title`: The RCA title (e.g., "RCA: Payment timeout due to connection pool exhaustion")
-   - `parentPageId`: `50773754002`
-   - `bodyMarkdown`: The full RCA document content in Markdown
-2. Confirm successful creation and share the page URL with the user
+1. Use the file name format: `{trace-id}-rca.md` (e.g., `abc123-def456-rca.md`)
+   - If the input was an error message instead of a trace ID, slugify the error message (e.g., `nullpointerexception-in-paymentservice-rca.md`)
+2. Create the file in the workspace root directory using `create_file`
+3. Write the full RCA content in Markdown format
+4. Show the user the file path and a preview of the content
 
 ### Step 6 — Summary
 
-After publishing:
-1. Share the Confluence page URL
+After saving the RCA file:
+1. Share the file path of the saved RCA markdown
 2. Summarize what was found and the recommended fix
 3. Ask if the user wants to:
    - Modify the RCA content
    - Investigate further with different queries
-   - Create a follow-up Jira ticket (future capability)
 
 ## Tips
 
@@ -135,4 +125,3 @@ After publishing:
 - Stack traces are the most valuable — always capture the full trace
 - If the codebase doesn't contain the erroring code, note that the error may originate from a dependency or different repository
 - Keep the RCA concise — the template enforces brevity by design
-- Use `mcp_hitl-web-mcp_show_confirmation_dialog` to confirm before publishing to Confluence
