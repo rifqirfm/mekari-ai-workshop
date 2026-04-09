@@ -29,8 +29,8 @@ Ask the user for the following (use `mcp_hitl-web-mcp_get_multiline_input` if av
 | Input | Required | Default | Example |
 |-------|----------|---------|--------|
 | Trace ID or error message | Yes | — | `abc123-def456` or `NullPointerException in PaymentService` |
-| Namespace | **Yes** | — | `production-nocode`, `staging-payment` |
-| Service name | Helpful | — | `nocode-rpc`, `payment-service` |
+| Namespace | **Yes** | — | `production`, `staging-payment` |
+| Service name | Helpful | — | `rpc`, `payment-service` |
 | Time range | Helpful | `last 1d` | `last 1h`, `2025-04-09 10:00 to 11:00` |
 | Environment | Helpful | — | `production`, `staging` |
 
