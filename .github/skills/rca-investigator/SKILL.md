@@ -26,14 +26,17 @@ Investigate production issues end-to-end: query Grafana Loki logs, trace errors 
 
 Ask the user for the following (use `mcp_hitl-web-mcp_get_multiline_input` if available):
 
-| Input | Required | Example |
-|-------|----------|---------|
-| Trace ID or error message | Yes | `abc123-def456` or `NullPointerException in PaymentService` |
-| Service name | Helpful | `nocode-rpc`, `payment-service` |
-| Time range | Helpful | `last 1h`, `2025-04-09 10:00 to 11:00` |
-| Environment | Helpful | `production`, `staging` |
+| Input | Required | Default | Example |
+|-------|----------|---------|--------|
+| Trace ID or error message | Yes | — | `abc123-def456` or `NullPointerException in PaymentService` |
+| Namespace | **Yes** | — | `production-nocode`, `staging-payment` |
+| Service name | Helpful | — | `nocode-rpc`, `payment-service` |
+| Time range | Helpful | `last 1d` | `last 1h`, `2025-04-09 10:00 to 11:00` |
+| Environment | Helpful | — | `production`, `staging` |
 
 If the user already provided some of these in their message, do not ask again.
+
+**Important:** If the user does not provide a **namespace**, you MUST remind and ask them to provide one before proceeding. Namespace is required to scope log queries correctly.
 
 ### Step 2 — Query Grafana Loki Logs
 
@@ -43,8 +46,22 @@ Use the `grafana-loki` MCP server tool `query_logs` to fetch relevant logs.
 1. If a **trace ID** is provided, query directly with `{traceID="<value>"}` or filter logs containing the trace ID
 2. If an **error message** is provided, search for that message pattern in logs
 3. If a **service name** is provided, scope the query to that service label (e.g., `{app="<service>"}`)
-4. Start with a broad query, then narrow down based on initial results
-5. Look for error-level logs first: `|= "error"` or `|= "ERROR"` or `level="error"`
+4. Always scope queries to the provided **namespace** (e.g., `{namespace="<value>"}`)
+5. If no time range is specified, default to **last 1 day** (`1d`)
+6. Start with a broad query, then narrow down based on initial results
+7. Look for error-level logs first: `|= "error"` or `|= "ERROR"` or `level="error"`
+
+**Exponential time range expansion:**
+If the trace ID or error is **not found** in the initial time range, automatically expand and retry:
+
+| Attempt | Time Range |
+|---------|------------|
+| 1 | 1 day (default) |
+| 2 | 2 days |
+| 3 | 4 days |
+| 4 | 7 days (maximum) |
+
+Stop expanding as soon as results are found. If no results after 7 days, inform the user that the trace/error could not be found within the maximum lookback window.
 
 **Log analysis checklist:**
 - Identify the **first occurrence** of the error (timeline origin)
